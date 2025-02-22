@@ -1,10 +1,11 @@
 'use client'
 
-import { Filter } from 'lucide-react'
+import { Filter, MessageCircle } from 'lucide-react'
 import { messages } from '../constants'
 import { Input } from '@/components/ui/input'
 import { ChatsCard } from '@/components/chats/chats-card'
 import { useEffect, useState } from 'react'
+import { Card } from '@/components/ui/card'
 
 const chats: { id: number; name: string; lastMessage: string }[] = [
   {
@@ -55,15 +56,11 @@ const chats: { id: number; name: string; lastMessage: string }[] = [
 ]
 
 export default function Chat() {
-  const [messageSelectecd, setMessageSelectecd] = useState<number>(1)
+  const [messageSelected, setMessageSelected] = useState<number>(1)
 
-  useEffect(() => {
-    setIdMessageSelectecd(1)
-  }, [])
-
-  const setIdMessageSelectecd = (id: number) => {
-    console.log('🚀 ~ setIdMessageSelectecd ~ id:', id)
-    setMessageSelectecd(id)
+  const setIdMessageSelected = (id: number) => {
+    console.log('🚀 ~ setIdMessageSelected ~ id:', id)
+    setMessageSelected(id)
   }
 
   const limitText = (text: string, limit: number) => {
@@ -73,12 +70,14 @@ export default function Chat() {
       return text
     }
   }
-
+  useEffect(() => {
+    setMessageSelected(1)
+  }, [])
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col max-h-[600px]">
       <div className="flex ">
-        <div className="w-1/3 bg-white p-4 border-r space-y-4 ">
-          <div className="relative mb-2">
+        <div className="w-1/3 bg-white py-4 border-r space-y-4 ">
+          <div className="relative m-2">
             <Input placeholder="Buscar conversa" className="pl-10" />
             <Filter
               className="absolute left-2 top-2.5 text-gray-400"
@@ -86,30 +85,46 @@ export default function Chat() {
             />
           </div>
           <div className="space-y-2 snap-y h-screen overflow-y-scroll scroll-auto">
-            {chats.map((item, i) => (
-              <ChatsCard
-                item={item}
-                limit={true}
-                key={i}
-                setMessageSelected={setIdMessageSelectecd}
-                messageSelectecd={messageSelectecd}
-              />
-            ))}
+            {chats.map((item) => {
+              const cardSelected =
+                item.id === messageSelected ? 'bg-[#39B54A26]' : ''
+              console.log(
+                '🚀 ~ {chats.map ~ cardSelected:',
+                item.id,
+                messageSelected,
+                item.id === messageSelected,
+              )
+
+              return (
+                <Card
+                  className={`p-2 snap-center flex items-center gap-2 cursor-pointer hover:bg-gray-200 scroll-m-0 ${cardSelected}`}
+                  onClick={() => setIdMessageSelected(item.id)}
+                  key={item.id}
+                >
+                  <div className="w-10 h-10 bg-gray-300 rounded-full" />
+                  <div>
+                    <p className="font-semibold">{item.name}</p>
+                    <p className="text-sm text-gray-500">
+                      {limitText(item.lastMessage, 30)}
+                    </p>
+                  </div>
+                  <MessageCircle className="ml-auto text-green-500" size={20} />
+                </Card>
+              )
+            })}
           </div>
         </div>
-        <div className="flex-1 py-4 space-y-4 ">
-          <div className="p-2 flex items-center gap-2 bg-gray-200 scroll-m-0 ">
+        <div className="flex-1">
+          <div className="p-2 flex items-center gap-2 bg-gray-200 scroll-m-0 rounded-md">
             <div className="w-10 h-10 bg-gray-300 rounded-full" />
             <div>
-              <p className="font-semibold">
-                {messages[messageSelectecd].sender}
-              </p>
+              <p className="font-semibold">{chats[messageSelected].name}</p>
               <p className="text-sm text-gray-500">
-                {limitText(messages[messageSelectecd].text, 30)}
+                {limitText(chats[messageSelected].lastMessage, 30)}
               </p>
             </div>
           </div>
-          <div className="overflow-y-scroll scroll-auto p-4">
+          <div className="space-y-2 snap-y h-screen overflow-y-scroll scroll-auto p-4">
             {messages.map((msg) => (
               <div
                 key={msg.id}

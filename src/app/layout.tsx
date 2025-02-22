@@ -19,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`antialiased`}>
+      <body className={`antialiased overflow-hidden`}>
         <header>
           <div className="bg-black text-white p-4 text-center font-semibold">
             YOLI - CHATBOT
