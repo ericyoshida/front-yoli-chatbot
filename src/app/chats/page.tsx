@@ -3,7 +3,6 @@
 import { Filter, MessageCircle } from 'lucide-react'
 import { messages } from '../constants'
 import { Input } from '@/components/ui/input'
-import { ChatsCard } from '@/components/chats/chats-card'
 import { useEffect, useState } from 'react'
 import { Card } from '@/components/ui/card'
 

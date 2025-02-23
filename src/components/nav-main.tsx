@@ -29,7 +29,7 @@ export const NavMain = ({
       <SidebarMenu>
         {items.map((item) => {
           item.isActive = item.url === pathname
-          const iconColapse = item.url === pathname ? 'open' : 'close'
+          const iconColapse = item.url === pathname ? 'open' : 'closed'
           const backgroundColorActive = item.isActive ? 'bg-gray-300' : ''
 
           return (
