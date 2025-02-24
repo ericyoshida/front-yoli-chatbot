@@ -1,5 +1,5 @@
 import { getCookie, setCookie } from '@/lib/cookies'
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 
 export const api = axios.create({
   baseURL: 'https://chatbotapi.yolitech.com.br',
@@ -7,22 +7,26 @@ export const api = axios.create({
 
 export const login = async () => {
   try {
-    const response = await api.post(
-      '/sessions',
-      {
-        email: process.env.USER_EMAIL,
-        password: process.env.USER_PASSWORD,
+    const data = {
+      email: process.env.USER_EMAIL,
+      password: process.env.USER_PASSWORD,
+    }
+    const response = await api.post('/sessions', data, {
+      headers: {
+        'Content-Type': 'application/json',
       },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      },
-    )
+    })
 
     setCookie('access_token', response.data.access_token)
     return
   } catch (error) {
+    console.log('🚀 ~ login ~ error:', error)
+    if (error instanceof AxiosError) {
+      if (error.response?.status === 401) {
+        await login()
+      }
+      return null
+    }
     console.log(error)
   }
 }
@@ -31,12 +35,11 @@ export const getLogs = async () => {
   let token = getCookie('access_token')
   if (!token) {
     await login()
+    token = getCookie('access_token')
   }
 
-  token = getCookie('access_token')
-
   try {
-    const response = await api.get(
+    return await api.get(
       'whatsapp-sellers/099489f1-f2f4-40be-9ca1-817e36f83fbe/chat-logs',
       {
         headers: {
@@ -44,29 +47,58 @@ export const getLogs = async () => {
         },
       },
     )
-    return response
   } catch (error) {
-    console.log(error)
+    if (error instanceof AxiosError) {
+      if (error.response?.status === 401) {
+        await login()
+      }
+      return null
+    }
     return null
   }
 }
 
-export const getSallerCustomer = async (whatsappSellerId: string) => {
+export const getSallerCustomer = async () => {
   let token = getCookie('access_token')
   if (!token) {
     await login()
+    token = getCookie('access_token')
   }
-  token = getCookie('access_token')
+
   try {
-    const response = await api.get(
-      `whatsapp-sellers/${whatsappSellerId}/customers`,
+    return await api.get(
+      `companies-seller/6c675faa-1e7a-4005-8c01-2250c1b83b79/customers`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       },
     )
-    return response
+  } catch (error) {
+    console.log(error)
+    return null
+  }
+}
+
+export const sendMessagesAuto = async (customersIds: string[]) => {
+  let token = getCookie('access_token')
+  if (!token) {
+    await login()
+    token = getCookie('access_token')
+  }
+
+  try {
+    return await api.post(
+      `whatsapp-sellers/099489f1-f2f4-40be-9ca1-817e36f83fbe/whatsapp-message-templates/c944eb70-c0ae-4766-a5d5-cc507c79c077/send-message-template`,
+      {
+        customersIds: customersIds,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    )
   } catch (error) {
     console.log(error)
     return null

@@ -1,24 +1,22 @@
 'use client'
 
+import { ICLient } from '@/app/interfaces/message'
+import { maskPhone } from '@/lib/utils'
 import { CheckSquare, Square } from 'lucide-react'
 import { useState } from 'react'
 
-interface Client {
-  id: number
-  name: string
-  whatsapp: string
-}
-
 interface TableClientsProps {
-  listFiltred: Client[]
-  toggleSelect: (id: number) => void
-  selectedClients: Set<number>
+  listFiltred: ICLient[]
+  toggleSelect: (id: string) => void
+  toggleSelectAll: () => void
+  selectedClients: Set<string>
 }
 
 export const TableClients = ({
   listFiltred,
   toggleSelect,
   selectedClients,
+  toggleSelectAll,
 }: TableClientsProps) => {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 8
@@ -51,14 +49,18 @@ export const TableClients = ({
       <div className="w-full">
         <div className="grid grid-cols-3 border-b-2 border-gray-700 font-bold">
           <div className="p-3 flex justify-center items-center">
-            <input type="checkbox" disabled className="w-4 h-4" />
+            <input
+              type="checkbox"
+              onClick={() => toggleSelectAll()}
+              className="w-4 h-4"
+            />
           </div>
           <div className="p-3">Nome</div>
           <div className="p-3">Whatsapp</div>
         </div>
 
         <div>
-          {currentItems.map((client) => (
+          {currentItems.map((client: ICLient) => (
             <div
               key={client.id}
               className="grid grid-cols-3 hover:bg-gray-100 cursor-pointer border-b"
@@ -72,7 +74,7 @@ export const TableClients = ({
                 )}
               </div>
               <div className="p-3">{client.name}</div>
-              <div className="p-3">{client.whatsapp}</div>
+              <div className="p-3">{maskPhone(client.phoneNumber)}</div>
             </div>
           ))}
         </div>
