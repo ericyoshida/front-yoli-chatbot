@@ -11,6 +11,7 @@ export const setCookie = (
   })
 }
 
-export const getCookie = (name: string) => JSON.parse(Cookies.get(name) ?? '')
+export const getCookie = (name: string) =>
+  JSON.parse((name && Cookies.get(name)) ?? '{}')
 
-export const removeCookie = (name: string) => Cookies.remove(name)
+export const removeCookie = (name: string) => name && Cookies.remove(name)
