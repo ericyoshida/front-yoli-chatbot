@@ -1,7 +1,6 @@
 'use client'
 
 import { Filter } from 'lucide-react'
-// import { messages } from '../constants'
 import { Input } from '@/components/ui/input'
 import { useEffect, useState } from 'react'
 import { Card } from '@/components/ui/card'
@@ -15,20 +14,25 @@ import cloud from '../../assets/cloud.svg'
 import cloudSnow from '../../assets/cloud-with-snow.svg'
 import snowFlake from '../../assets/snowflake.svg'
 import whatsapp from '../../assets/whatsapp.svg'
+import LoadingButton from '@/components/loadingButton'
 
 export default function Chat() {
   const [messageSelected, setMessageSelected] = useState<string | null>(null)
   const [chatData, setChatData] = useState<IChat>({} as IChat)
   const [loadingChats, setLoadingChats] = useState(false)
+  const [loadButton, setLoadButton] = useState(false)
   const [loadingMessages, setLoadingMessages] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [chats, setChats] = useState<IChat[]>([])
   const [itemsShow, setItemsShow] = useState<IChat[]>([])
   const [customers, setCustomers] = useState<ICustomer[]>([])
   const [pageCurrent, setPageCurrent] = useState(1)
-  const itemsPage = 30
+  const [clickButton, setClickButton] = useState(0)
+  const itemsPage = 10
 
   const fetchData = async () => {
+    setLoadingChats(true)
+
     const [res1, res2] = await Promise.all([
       getLogs(),
       getSallerCustomer(),
@@ -36,8 +40,21 @@ export default function Chat() {
       return data
     })
 
-    setChats((res1 && res1.data && res1.data.chatLogs) ?? [])
+    const sortList =
+      res1 &&
+      res1.data &&
+      res1.data.chatLogs.filter(
+        (item: IChat) =>
+          item.contactId.value !== '1a3bfe5d-c9e3-4d0e-8562-8b821451f3ce' &&
+          item.contactId.value !== '4e05f6a1-9ae8-43e6-a451-cd60013beccb',
+      )
+    sortList.sort((a: IChat, b: IChat) => {
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    })
+
+    setChats(sortList ?? [])
     setCustomers((res2 && res2.data && res2.data.customers) ?? [])
+    setLoadingChats(false)
   }
 
   const getEngagementIcon = (leadEngagement: string) => {
@@ -55,48 +72,48 @@ export default function Chat() {
 
   const loadMoreData = () => {
     if (chats?.length === 0) {
-      return []
+      return
     }
-    const listSorted = chats.sort((a, b) => {
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    })
+    if (pageCurrent - 1 !== clickButton) {
+      return
+    }
+    setLoadButton(true)
+
     const init = (pageCurrent - 1) * itemsPage
+    console.log('🚀 ~ loadMoreData ~ init:', init)
     const end = init + itemsPage
+    console.log('🚀 ~ loadMoreData ~ end:', end)
     const itemsNew =
-      listSorted
-        ?.filter((item) => {
-          // ids que pertencem a usuários internos não devem ser exibidos.0
-          if (
-            item.contactId.value !== '1a3bfe5d-c9e3-4d0e-8562-8b821451f3ce' &&
-            item.contactId.value !== '4e05f6a1-9ae8-43e6-a451-cd60013beccb'
-          ) {
-            if (!item.name) {
-              item.name =
-                customers.find(
-                  (customer: ICustomer) => customer.id === item.contactId.value,
-                )?.name ?? 'Não informado'
-            }
-            if (item?.messages && item?.messages.length > 0) {
-              item.messages = item?.messages.sort(
-                (a, b) =>
-                  new Date(b.createdAt).getTime() -
-                  new Date(a.createdAt).getTime(),
-              )
-            }
-            if (item.messages && item.messages.length > 0) {
-              item.lastMessage =
-                item.messages.find((message) => message.isFromCustomer === true)
-                  ?.content ?? ''
-            }
+      chats?.slice(init, end).map((item) => {
+        if (!item.name) {
+          item.name =
+            customers.find(
+              (customer: ICustomer) => customer.id === item.contactId.value,
+            )?.name ?? 'Não informado'
+        }
+        if (item?.messages && item?.messages.length > 0) {
+          item.messages = item?.messages.sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          )
+        }
+        if (item.messages && item.messages.length > 0) {
+          item.lastMessage =
+            item.messages.find((message) => message.isFromCustomer === true)
+              ?.content ?? ''
+        }
 
-            item.engagementIcon = getEngagementIcon(item.currentLeadEngagement)
+        item.engagementIcon = getEngagementIcon(item.currentLeadEngagement)
 
-            return item
-          }
-        })
-        .slice(init, end) ?? []
+        return item
+      }) ?? []
 
-    return [...itemsShow, ...itemsNew]
+    const listOrdenated: IChat[] = [...itemsShow, ...itemsNew]
+    if (itemsNew.length > 0) {
+      setPageCurrent((prev) => prev + 1)
+    }
+    setItemsShow(listOrdenated)
+    setLoadButton(false)
   }
 
   const listFiltred =
@@ -118,18 +135,12 @@ export default function Chat() {
 
   useEffect(() => {
     setLoadingChats(true)
-    const listOrdenated: IChat[] = loadMoreData()
-    if (listOrdenated.length > 10) {
-      setPageCurrent(pageCurrent + 1)
-    }
-    setItemsShow(listOrdenated)
+    loadMoreData()
     setLoadingChats(false)
   }, [chats])
 
   useEffect(() => {
-    setLoadingChats(true)
     fetchData()
-    setLoadingChats(false)
   }, [])
 
   useEffect(() => {
@@ -159,7 +170,7 @@ export default function Chat() {
           {loadingChats ? (
             <Loading />
           ) : (
-            <div className="space-y-2  overflow-y-auto h-[100vh-120px] snap-y scroll-m-2 snap-mandatory">
+            <div className="space-y-2  snap-y overflow-scroll h-[calc(100vh-8rem)] ">
               {listFiltred &&
                 listFiltred.map((item) => {
                   const cardSelected =
@@ -198,12 +209,19 @@ export default function Chat() {
                     </Card>
                   )
                 })}
-              <button
-                className="bg-green-500 text-white px-4 py-2 w-full rounded-md hover:bg-green-600"
-                onClick={loadMoreData}
-              >
-                Carregar mais mensagens
-              </button>
+              {loadButton ? (
+                <LoadingButton />
+              ) : (
+                <button
+                  className="bg-green-500 text-white px-4 py-2 w-full rounded-md hover:bg-green-600"
+                  onClick={() => {
+                    setClickButton(clickButton + 1)
+                    loadMoreData()
+                  }}
+                >
+                  Carregar mais conversas
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -222,7 +240,7 @@ export default function Chat() {
           {loadingMessages ? (
             <Loading />
           ) : (
-            <div className="space-y-2 snap-y overflow-y-scroll h-[100%] p-4">
+            <div className="space-y-2 snap-y overflow-scroll h-[calc(100vh-100px)] p-4">
               {chatData &&
                 chatData.messages &&
                 chatData.messages.map((msg: IMessage) => (
