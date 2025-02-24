@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { TableClients } from '@/components/table-clients'
+// import { api } from '@/services/api'
 
 const clients: { id: number; name: string; whatsapp: string }[] = [
   { id: 1, name: 'John', whatsapp: '(12) 91919-1222' },
@@ -46,6 +47,22 @@ export default function ClientList() {
     return searchTerm
       ? client.name.toLowerCase().includes(searchTerm.toLowerCase())
       : client
+  })
+
+  const getClients = async () => {
+    // try {
+    //   const response = await api.get(
+    //     'whatsapp-sellers/099489f1-f2f4-40be-9ca1-817e36f83fbe/chat-logs',
+    //   )
+    //   const data = response.data
+    //   console.log('success =>', data)
+    // } catch (error) {
+    //   console.log('error =>', error)
+    // }
+  }
+
+  useEffect(() => {
+    getClients()
   })
 
   return (
