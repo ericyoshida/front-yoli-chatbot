@@ -11,11 +11,13 @@ export default function Home() {
   const pathName = usePathname()
 
   useEffect(() => {
-    const token = getCookie('access_token')
+    let token = getCookie('access_token')
     if (!token) {
       login()
+      token = getCookie('access_token')
     }
-    if (pathName === '/') {
+
+    if (token && pathName === '/') {
       router.replace('/chats')
     }
   }, [])
