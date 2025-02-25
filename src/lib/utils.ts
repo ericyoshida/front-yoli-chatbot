@@ -13,10 +13,7 @@ export function cn(...inputs: ClassValue[]) {
 export const maskPhone = (value: string) => {
   return value
     .replace(/\D/g, '')
-    .replace(/(\d{2})(\d)/, '($1) $2')
-    .replace(/(\d{4})(\d)/, '$1-$2')
-    .replace(/(\d{4})-(\d)(\d{4})/, '$1$2-$3')
-    .replace(/(-\d{4})\d+?$/, '$1')
+    .replace(/^55(\d{2})(\d{5})(\d{4})$/, '+55 ($1) $2-$3')
 }
 
 export const formatDate = (dateString: string) => {
