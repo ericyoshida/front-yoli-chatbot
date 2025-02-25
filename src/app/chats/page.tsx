@@ -15,6 +15,7 @@ import cloudSnow from '../../assets/cloud-with-snow.svg'
 import snowFlake from '../../assets/snowflake.svg'
 import whatsapp from '../../assets/whatsapp.svg'
 import LoadingButton from '@/components/loadingButton'
+import { formatDate } from '@/lib/utils'
 
 export default function Chat() {
   const [messageSelected, setMessageSelected] = useState<string | null>(null)
@@ -40,7 +41,7 @@ export default function Chat() {
       return data
     })
 
-    const sortList =
+    const sortList: IChat[] =
       res1 &&
       res1.data &&
       res1.data.chatLogs.filter(
@@ -48,9 +49,11 @@ export default function Chat() {
           item.contactId.value !== '1a3bfe5d-c9e3-4d0e-8562-8b821451f3ce' &&
           item.contactId.value !== '4e05f6a1-9ae8-43e6-a451-cd60013beccb',
       )
-    sortList.sort((a: IChat, b: IChat) => {
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    })
+    if (sortList && sortList.length > 0) {
+      sortList.sort((a: IChat, b: IChat) => {
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      })
+    }
 
     setChats(sortList ?? [])
     setCustomers((res2 && res2.data && res2.data.customers) ?? [])
@@ -70,19 +73,19 @@ export default function Chat() {
     }
   }
 
-  const loadMoreData = () => {
+  const loadMoreData = (type?: 'button') => {
     if (chats?.length === 0) {
       return
     }
-    if (pageCurrent - 1 !== clickButton) {
+
+    if (!type && pageCurrent - 1 !== clickButton) {
       return
     }
+
     setLoadButton(true)
 
     const init = (pageCurrent - 1) * itemsPage
-    console.log('🚀 ~ loadMoreData ~ init:', init)
     const end = init + itemsPage
-    console.log('🚀 ~ loadMoreData ~ end:', end)
     const itemsNew =
       chats?.slice(init, end).map((item) => {
         if (!item.name) {
@@ -131,6 +134,28 @@ export default function Chat() {
     } else {
       return text
     }
+  }
+
+  const timePassed = (date: string) => {
+    const now = new Date()
+    const diff = Math.floor((now.getTime() - new Date(date).getTime()) / 1000) // diferença em segundos
+
+    if (diff < 60) {
+      return `${diff} min`
+    }
+
+    const minutes = Math.floor(diff / 60)
+    if (minutes < 60) {
+      return `${minutes} min`
+    }
+
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) {
+      return `${hours} h${hours > 1 ? 's' : ''}`
+    }
+
+    const days = Math.floor(hours / 24)
+    return `${days} d${days > 1 ? "'s" : ''}`
   }
 
   useEffect(() => {
@@ -196,16 +221,20 @@ export default function Chat() {
                       <div>
                         <p className="font-semibold">{item.name}</p>
                         <p className="text-sm text-gray-500">
-                          {limitText(item.lastMessage, 30)}
+                          {limitText(item.lastMessage, 20)}
                         </p>
                       </div>
-                      <Image
-                        alt="whatsapp-icon"
-                        src={whatsapp}
-                        className="ml-auto text-green-500"
-                        width={20}
-                        height={20}
-                      />
+                      <div className="flex justify-between w-20 ml-auto">
+                        <span className="text-gray-500 ">
+                          {timePassed(item.updatedAt.toString())}
+                        </span>
+                        <Image
+                          alt="whatsapp-icon"
+                          src={whatsapp}
+                          width={20}
+                          height={20}
+                        />
+                      </div>
                     </Card>
                   )
                 })}
@@ -216,7 +245,7 @@ export default function Chat() {
                   className="bg-green-500 text-white px-4 py-2 w-full rounded-md hover:bg-green-600"
                   onClick={() => {
                     setClickButton(clickButton + 1)
-                    loadMoreData()
+                    loadMoreData('button')
                   }}
                 >
                   Carregar mais conversas
@@ -240,7 +269,7 @@ export default function Chat() {
           {loadingMessages ? (
             <Loading />
           ) : (
-            <div className="space-y-2 snap-y overflow-scroll h-[calc(100vh-100px)] p-4">
+            <div className="flex flex-col-reverse space-y-2 snap-y overflow-scroll h-[calc(100vh-100px)] p-4">
               {chatData &&
                 chatData.messages &&
                 chatData.messages.map((msg: IMessage) => (
@@ -252,8 +281,14 @@ export default function Chat() {
                         : 'justify-start'
                     }`}
                   >
-                    <div className="max-w-xs bg-gray-200 p-2 rounded-md text-sm">
-                      {msg.content}
+                    <div className="max-w-xs bg-gray-200 p-2 m-1 rounded-md text-sm">
+                      <div className="flex flex-col">
+                        <span className="justify-start">{msg.content}</span>
+                        <span className="justify-end text-gray-500">
+                          {formatDate(msg.createdAt.toString()).date}{' '}
+                          {formatDate(msg.createdAt.toString()).hour}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))}
