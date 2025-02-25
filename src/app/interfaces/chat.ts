@@ -2,6 +2,7 @@ export interface IChat {
   id: string
   name: string
   lastMessage: string
+  phoneNumber: string
   contactId: {
     value: string
   }

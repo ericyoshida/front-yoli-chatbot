@@ -14,8 +14,10 @@ import cloud from '../../assets/cloud.svg'
 import cloudSnow from '../../assets/cloud-with-snow.svg'
 import snowFlake from '../../assets/snowflake.svg'
 import whatsapp from '../../assets/whatsapp.svg'
+import exclamation from '../../assets/exclamation.svg'
 import LoadingButton from '@/components/loadingButton'
-import { formatDate } from '@/lib/utils'
+import { formatDate, maskPhone } from '@/lib/utils'
+import { MultiSelect } from '@/components/multi-select'
 
 export default function Chat() {
   const [messageSelected, setMessageSelected] = useState<string | null>(null)
@@ -29,6 +31,10 @@ export default function Chat() {
   const [customers, setCustomers] = useState<ICustomer[]>([])
   const [pageCurrent, setPageCurrent] = useState(1)
   const [clickButton, setClickButton] = useState(0)
+  const [filterSelected, setFilterSelected] = useState<boolean>(false)
+  const options = ['1', '2', '3', '4', '5']
+  const [selected, setSelected] = useState<string[]>([])
+  const [open, setOpen] = useState(false)
   const itemsPage = 10
 
   const fetchData = async () => {
@@ -60,6 +66,26 @@ export default function Chat() {
     setLoadingChats(false)
   }
 
+  const toggleSelection = (value: string) => {
+    setSelected((prev) => {
+      if (prev.includes(value)) {
+        return prev.filter((item) => item !== value)
+      } else {
+        return [...prev, value] // Mantém a ordem de seleção
+      }
+    })
+  }
+
+  const filterByEngajamento = (data: IChat[], selected: string[]) => {
+    if (filterSelected && selected.length > 0) {
+      return selected.flatMap((value) =>
+        data.filter((item) => item.currentLeadEngagement === value),
+      )
+    } else {
+      return data
+    }
+  }
+
   const getEngagementIcon = (leadEngagement: string) => {
     const currentLeadEngagement = Number(leadEngagement)
     if (currentLeadEngagement >= 4) {
@@ -70,6 +96,8 @@ export default function Chat() {
       return cloudSnow
     } else if (currentLeadEngagement <= 1) {
       return snowFlake
+    } else {
+      return exclamation
     }
   }
 
@@ -86,13 +114,18 @@ export default function Chat() {
 
     const init = (pageCurrent - 1) * itemsPage
     const end = init + itemsPage
-    const itemsNew =
-      chats?.slice(init, end).map((item) => {
+
+    let updateChats: IChat[] = chats
+    if (!type) {
+      updateChats = chats?.map((item) => {
         if (!item.name) {
-          item.name =
-            customers.find(
-              (customer: ICustomer) => customer.id === item.contactId.value,
-            )?.name ?? 'Não informado'
+          const customer = customers.find(
+            (customer: ICustomer) => customer.id === item.contactId.value,
+          )
+          item.name = customer?.name ?? 'Não identificado'
+          item.phoneNumber = customer?.phoneNumber
+            ? maskPhone(customer?.phoneNumber)
+            : ''
         }
         if (item?.messages && item?.messages.length > 0) {
           item.messages = item?.messages.sort(
@@ -106,10 +139,16 @@ export default function Chat() {
               ?.content ?? ''
         }
 
-        item.engagementIcon = getEngagementIcon(item.currentLeadEngagement)
+        item.engagementIcon = item.currentLeadEngagement
+          ? getEngagementIcon(item.currentLeadEngagement)
+          : ''
 
         return item
-      }) ?? []
+      })
+
+      setChats(updateChats)
+    }
+    const itemsNew = updateChats.slice(init, end) ?? []
 
     const listOrdenated: IChat[] = [...itemsShow, ...itemsNew]
     if (itemsNew.length > 0) {
@@ -120,13 +159,13 @@ export default function Chat() {
   }
 
   const listFiltred =
-    itemsShow.filter((chat: IChat) => {
-      if (searchTerm) {
-        return chat.name.toLowerCase().includes(searchTerm.toLowerCase())
-      } else {
-        return chat
-      }
-    }) ?? []
+    searchTerm && !filterSelected
+      ? itemsShow.filter((chat: IChat) => {
+          return chat.name.toLowerCase().includes(searchTerm.toLowerCase())
+        })
+      : filterSelected
+      ? filterByEngajamento(itemsShow, selected)
+      : itemsShow
 
   const limitText = (text: string, limit: number) => {
     if (text && text.length > limit) {
@@ -181,16 +220,27 @@ export default function Chat() {
     <div className="flex flex-col h-screen ">
       <div className="flex">
         <div className="flex flex-col h-screen w-1/3 py-4 border-r space-y-4 ">
-          <div className="relative m-2 ">
-            <Input
-              placeholder="Buscar conversa"
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+          <div className="flex justify-around items-center m-2  ">
             <Filter
-              className="absolute left-2 top-2.5 text-gray-400"
+              className="m-2 cursor-pointer text-gray-400"
               size={20}
+              onClick={() => setFilterSelected(!filterSelected)}
             />
+            {!filterSelected ? (
+              <Input
+                placeholder={'Buscar por nome'}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className=""
+              />
+            ) : (
+              <MultiSelect
+                open={open}
+                options={options}
+                setOpen={setOpen}
+                selected={selected}
+                toggleSelection={toggleSelection}
+              />
+            )}
           </div>
           {loadingChats ? (
             <Loading />
@@ -259,7 +309,12 @@ export default function Chat() {
             <div className="p-2 flex items-center gap-2 bg-gray-200 scroll-m-0 rounded-md">
               <div className="w-10 h-10 bg-gray-300 rounded-full" />
               <div>
-                <p className="font-semibold">{chatData.name}</p>
+                <p className="font-semibold">
+                  {chatData.name} -{' '}
+                  <span className="font-normal text-gray-500">
+                    {chatData.phoneNumber}
+                  </span>
+                </p>
                 <p className="text-sm text-gray-500">
                   {limitText(chatData.lastMessage, 30)}
                 </p>
