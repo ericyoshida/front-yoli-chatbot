@@ -53,3 +53,13 @@ export const getEngagementIcon = (leadEngagement: string) => {
     return exclamation
   }
 }
+
+export const timePassed = (date: string) => {
+  const now = new Date()
+  const diff = Math.floor((now.getTime() - new Date(date).getTime()) / 1000) // diferença em segundos
+
+  if (diff < 60) return `${diff} seg`
+  if (diff < 3600) return `${Math.floor(diff / 60)} min`
+  if (diff < 86400) return `${Math.floor(diff / 3600)} h`
+  return `${Math.floor(diff / 86400)} d`
+}

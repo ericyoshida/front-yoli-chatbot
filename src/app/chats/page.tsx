@@ -16,6 +16,7 @@ import {
   getEngagementIcon,
   maskPhone,
   limitText,
+  timePassed,
 } from '@/lib/utils'
 import { MultiSelect } from '@/components/multi-select'
 
@@ -24,7 +25,7 @@ const options = ['1', '2', '3', '4', '5']
 
 export default function Chat() {
   const [messageSelected, setMessageSelected] = useState<string | null>(null)
-  const [chatData, setChatData] = useState<IChat>({} as IChat)
+  const [chatData, setChatData] = useState<IChat | null>(null)
   const [loadingChats, setLoadingChats] = useState(false)
   const [loadButton, setLoadButton] = useState(false)
   const [loadingMessages, setLoadingMessages] = useState(false)
@@ -49,13 +50,14 @@ export default function Chat() {
     })
 
     const sortList: IChat[] =
-      res1 &&
-      res1.data &&
-      res1.data.chatLogs.filter(
-        (item: IChat) =>
-          item.contactId.value !== '1a3bfe5d-c9e3-4d0e-8562-8b821451f3ce' &&
-          item.contactId.value !== '4e05f6a1-9ae8-43e6-a451-cd60013beccb',
-      )
+      (res1 &&
+        res1.data &&
+        res1.data.chatLogs.filter(
+          (item: IChat) =>
+            item.contactId.value !== '1a3bfe5d-c9e3-4d0e-8562-8b821451f3ce' &&
+            item.contactId.value !== '4e05f6a1-9ae8-43e6-a451-cd60013beccb',
+        )) ??
+      []
     if (sortList && sortList.length > 0) {
       sortList.sort((a: IChat, b: IChat) => {
         return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
@@ -77,14 +79,12 @@ export default function Chat() {
     })
   }
 
-  const filterByEngajamento = (data: IChat[], selected: string[]) => {
-    if (filterSelected && selected.length > 0) {
-      return selected.flatMap((value) =>
-        data.filter((item) => item.currentLeadEngagement === value),
-      )
-    } else {
-      return data
-    }
+  const filterByEngagement = (data: IChat[], selected: string[]) => {
+    if (!filterSelected || selected.length === 0) return data
+
+    const selectedSet = new Set(selected) // 🔥 Conjunto para buscas rápidas
+
+    return data.filter((item) => selectedSet.has(item.currentLeadEngagement))
   }
 
   const loadMoreData = (type?: 'button') => {
@@ -150,30 +150,8 @@ export default function Chat() {
           return chat.name.toLowerCase().includes(searchTerm.toLowerCase())
         })
       : filterSelected
-      ? filterByEngajamento(itemsShow, selected)
+      ? filterByEngagement(itemsShow, selected)
       : itemsShow
-
-  const timePassed = (date: string) => {
-    const now = new Date()
-    const diff = Math.floor((now.getTime() - new Date(date).getTime()) / 1000) // diferença em segundos
-
-    if (diff < 60) {
-      return `${diff} min`
-    }
-
-    const minutes = Math.floor(diff / 60)
-    if (minutes < 60) {
-      return `${minutes} min`
-    }
-
-    const hours = Math.floor(minutes / 60)
-    if (hours < 24) {
-      return `${hours} h${hours > 1 ? 's' : ''}`
-    }
-
-    const days = Math.floor(hours / 24)
-    return `${days} d${days > 1 ? "'s" : ''}`
-  }
 
   useEffect(() => {
     setLoadingChats(true)
@@ -190,7 +168,7 @@ export default function Chat() {
     const chatDataSelected = itemsShow.find(
       (item) => item.id === messageSelected,
     )
-    setChatData(chatDataSelected ?? ({} as IChat))
+    setChatData(chatDataSelected ?? null)
     setLoadingMessages(false)
   }, [messageSelected])
 
@@ -276,7 +254,7 @@ export default function Chat() {
                     loadMoreData('button')
                   }}
                 >
-                  Carregar mais conversas dddddddd
+                  Carregar mais conversas
                 </button>
               )}
             </div>
