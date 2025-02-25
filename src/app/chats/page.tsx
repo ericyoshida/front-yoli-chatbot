@@ -9,15 +9,18 @@ import { IChat, ICustomer, IMessage } from '../interfaces/chat'
 import { Loading } from '@/components/loading'
 import Image from 'next/image'
 
-import fire from '../../assets/fire.svg'
-import cloud from '../../assets/cloud.svg'
-import cloudSnow from '../../assets/cloud-with-snow.svg'
-import snowFlake from '../../assets/snowflake.svg'
 import whatsapp from '../../assets/whatsapp.svg'
-import exclamation from '../../assets/exclamation.svg'
-import LoadingButton from '@/components/loadingButton'
-import { formatDate, maskPhone } from '@/lib/utils'
+import { LoadingButton } from '@/components/loadingButton'
+import {
+  formatDate,
+  getEngagementIcon,
+  maskPhone,
+  limitText,
+} from '@/lib/utils'
 import { MultiSelect } from '@/components/multi-select'
+
+const itemsPage = 10
+const options = ['1', '2', '3', '4', '5']
 
 export default function Chat() {
   const [messageSelected, setMessageSelected] = useState<string | null>(null)
@@ -32,10 +35,8 @@ export default function Chat() {
   const [pageCurrent, setPageCurrent] = useState(1)
   const [clickButton, setClickButton] = useState(0)
   const [filterSelected, setFilterSelected] = useState<boolean>(false)
-  const options = ['1', '2', '3', '4', '5']
   const [selected, setSelected] = useState<string[]>([])
   const [open, setOpen] = useState(false)
-  const itemsPage = 10
 
   const fetchData = async () => {
     setLoadingChats(true)
@@ -83,21 +84,6 @@ export default function Chat() {
       )
     } else {
       return data
-    }
-  }
-
-  const getEngagementIcon = (leadEngagement: string) => {
-    const currentLeadEngagement = Number(leadEngagement)
-    if (currentLeadEngagement >= 4) {
-      return fire
-    } else if (currentLeadEngagement === 3) {
-      return cloud
-    } else if (currentLeadEngagement === 2) {
-      return cloudSnow
-    } else if (currentLeadEngagement <= 1) {
-      return snowFlake
-    } else {
-      return exclamation
     }
   }
 
@@ -166,14 +152,6 @@ export default function Chat() {
       : filterSelected
       ? filterByEngajamento(itemsShow, selected)
       : itemsShow
-
-  const limitText = (text: string, limit: number) => {
-    if (text && text.length > limit) {
-      return text.slice(0, limit) + '...'
-    } else {
-      return text
-    }
-  }
 
   const timePassed = (date: string) => {
     const now = new Date()
@@ -298,7 +276,7 @@ export default function Chat() {
                     loadMoreData('button')
                   }}
                 >
-                  Carregar mais conversas
+                  Carregar mais conversas dddddddd
                 </button>
               )}
             </div>
