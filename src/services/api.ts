@@ -89,7 +89,7 @@ export const sendMessagesAuto = async (customersIds: string[]) => {
 
   try {
     return await api.post(
-      `whatsapp-sellers/099489f1-f2f4-40be-9ca1-817e36f83fbe/whatsapp-message-templates/8744cf19-f5ef-443f-ba60-598d31cd4807/send-message-template`,
+      `whatsapp-sellers/099489f1-f2f4-40be-9ca1-817e36f83fbe/whatsapp-message-templates/9cdffa74-5cb3-4354-8e82-4727b5a1abba/send-message-template`,
       {
         customersIds: customersIds,
       },
